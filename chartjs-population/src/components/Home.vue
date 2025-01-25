@@ -143,40 +143,39 @@
       },
   
       async exportData() {
-  try {
-    const apiUrl =
-      process.env.NODE_ENV === "production"
-        ? "http://143.47.190.25:1880/metingdata" // Gebruik de backend direct in productie
-        : "/api/metingdata"; // Gebruik proxy tijdens ontwikkeling
-
-    const payload = {
-      type: "standaard",
-    };
-
-    const response = await axios.post(apiUrl, payload, {
-      headers: {
-        "Content-Type": "application/json",
+        try {
+          const payload = {
+            type: "standaard",
+          };
+  
+          const response = await axios.post(
+            "http://143.47.190.25:1880/metingdata",
+            payload,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+  
+          if (response.data) {
+            const dataToExport = {
+              timestamp: new Date().toISOString(),
+              apiData: response.data,
+            };
+  
+            download(
+              JSON.stringify(dataToExport, null, 2),
+              "api_sensor_data.json",
+              "application/json"
+            );
+          } else {
+            console.warn("Geen data ontvangen van de API");
+          }
+        } catch (error) {
+          console.error("Fout bij exporteren van data:", error);
+        }
       },
-    });
-
-    if (response.data) {
-      const dataToExport = {
-        timestamp: new Date().toISOString(),
-        apiData: response.data,
-      };
-
-      download(
-        JSON.stringify(dataToExport, null, 2),
-        "api_sensor_data.json",
-        "application/json"
-      );
-    } else {
-      console.warn("Geen data ontvangen van de API");
-    }
-  } catch (error) {
-    console.error("Fout bij exporteren van data:", error);
-  }
-},
   
       async mounted() {
         try {
