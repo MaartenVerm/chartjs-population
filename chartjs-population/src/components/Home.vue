@@ -144,12 +144,16 @@
   
       async exportData() {
   try {
+    const apiUrl =
+      process.env.NODE_ENV === "production"
+        ? "http://143.47.190.25:1880/metingdata" // Gebruik de backend direct in productie
+        : "/api/metingdata"; // Gebruik proxy tijdens ontwikkeling
+
     const payload = {
       type: "standaard",
     };
 
-    // Gebruik de proxy: vervang het volledige adres door `/api`
-    const response = await axios.post("/api/metingdata", payload, {
+    const response = await axios.post(apiUrl, payload, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -161,7 +165,6 @@
         apiData: response.data,
       };
 
-      // Download de data als JSON-bestand
       download(
         JSON.stringify(dataToExport, null, 2),
         "api_sensor_data.json",
