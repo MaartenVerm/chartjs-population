@@ -1,19 +1,16 @@
 <template>
-  <ProductVerkopenChart />
+  <div id="app">
+    <!-- Router View zorgt ervoor dat alleen de inhoud van de juiste route wordt geladen -->
+    <router-view />
+  </div>
 </template>
 
 <script>
-import ProductVerkopenChart from './components/ProductVerkopenChart.vue';
-
 export default {
-  name: 'App',
-  components: {
-     ProductVerkopenChart }
-  
-  }
-
+  name: "App",
+};
 </script>
 
 <style>
-
+/* Je kunt hier globale stijlen toevoegen */
 </style>
