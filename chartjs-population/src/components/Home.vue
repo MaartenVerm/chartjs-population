@@ -143,45 +143,42 @@
       },
   
       async exportData() {
-        try {
-          const payload = {
-            type: "standaard",
-          };
-  
-          const response = await axios.post(
-            "http://143.47.190.25:1880/metingdata",
-            payload,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-  
-          if (response.data) {
-            const dataToExport = {
-              timestamp: new Date().toISOString(),
-              apiData: response.data,
-            };
-  
-            download(
-              JSON.stringify(dataToExport, null, 2),
-              "api_sensor_data.json",
-              "application/json"
-            );
-          } else {
-            console.warn("Geen data ontvangen van de API");
-          }
-        } catch (error) {
-          console.error("Fout bij exporteren van data:", error);
-        }
+  try {
+    const payload = {
+      type: "standaard",
+    };
+
+    // Gebruik de proxy: vervang het volledige adres door `/api`
+    const response = await axios.post("/api/metingdata", payload, {
+      headers: {
+        "Content-Type": "application/json",
       },
+    });
+
+    if (response.data) {
+      const dataToExport = {
+        timestamp: new Date().toISOString(),
+        apiData: response.data,
+      };
+
+      // Download de data als JSON-bestand
+      download(
+        JSON.stringify(dataToExport, null, 2),
+        "api_sensor_data.json",
+        "application/json"
+      );
+    } else {
+      console.warn("Geen data ontvangen van de API");
+    }
+  } catch (error) {
+    console.error("Fout bij exporteren van data:", error);
+  }
+},
   
       async mounted() {
         try {
           const payload = {
             type: "standaard",
-            key: "value",
           };
   
           const response = await axios.post(
