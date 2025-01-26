@@ -168,7 +168,8 @@
   
         const response = await axios.post(
           "http://143.47.190.25:1880/boei",
-          payload
+          payload,
+          { timeout: 5000 }
         );
   
         console.log("Mounted response:", response.data);
