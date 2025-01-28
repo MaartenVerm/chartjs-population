@@ -154,7 +154,7 @@ export default {
         };
 
         const response = await axios.post(
-          "http://143.47.190.25:1880/metingdata",
+          "https://nodeapi.hopto.org:1880/metingdata",
           payload,
           {
             headers: {
