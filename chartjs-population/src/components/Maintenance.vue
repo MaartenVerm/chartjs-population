@@ -111,7 +111,7 @@ export default {
         async fetchBuoys() {
             try {
                 const payload = { type: "READ" }; // No additional parameters needed
-                const response = await axios.post("http://143.47.190.25:1880/boei", payload);
+                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", payload);
                 this.buoys = response.data || [];
                 console.log("Buoys fetched:", this.buoys); // Debugging
             } catch (error) {
@@ -124,7 +124,7 @@ export default {
             if (!this.selectedBuoy) return;
             try {
                 const payload = { type: "READONE", id: this.selectedBuoy }; // Use 'id' as per API
-                const response = await axios.post("http://143.47.190.25:1880/boei", payload);
+                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", payload);
                 console.log("Buoy Details Response:", response.data); // Debugging
                 this.selectedBuoyDetails = response.data || {};
                 await this.fetchSensorsByBuoy();
@@ -138,7 +138,7 @@ export default {
             try {
                 const payload = { type: "READBOEI", boei_id: this.selectedBuoy };
                 const response = await axios.post(
-                    "http://143.47.190.25:1880/sensorperboei",
+                    "https://nodeapi.hopto.org:1880/sensorperboei",
                     payload
                 );
                 console.log("Sensors Response:", response.data); // Inspect the response
@@ -162,7 +162,7 @@ export default {
                     tiepe: this.selectedSensor.tiepe, // Add 'tiepe' if available
                     eenheid: this.selectedSensor.eenheid, // Add 'eenheid' if available
                 };
-                await axios.post("http://143.47.190.25:1880/sensor", payload);
+                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
                 alert("Sensor bijgewerkt!");
                 await this.fetchSensorsByBuoy();
             } catch (error) {
@@ -177,7 +177,7 @@ export default {
                     type: "DELETE",
                     serienummer: this.selectedSensor.sensor_serienummer // Use 'serienummer' as per API
                 };
-                await axios.post("http://143.47.190.25:1880/sensor", payload);
+                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
                 alert("Sensor verwijderd!");
                 this.selectedSensor = null;
                 await this.fetchSensorsByBuoy();
@@ -197,7 +197,7 @@ export default {
                     tiepe: "TYPE_HERE", // Replace with actual type
                     eenheid: "UNIT_HERE", // Replace with actual unit
                 };
-                await axios.post("http://143.47.190.25:1880/sensor", payload);
+                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
                 alert("Nieuwe sensor toegevoegd!");
                 this.newSensorName = "";
                 await this.fetchSensorsByBuoy();

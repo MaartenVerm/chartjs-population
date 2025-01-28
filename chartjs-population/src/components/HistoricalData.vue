@@ -88,7 +88,7 @@
           };
   
           const tdsResponse = await axios.post(
-            "http://143.47.190.25:1880/metingdata",
+            "https://nodeapi.hopto.org:1880/metingdata",
             payload
           );
           const EGVArray = tdsResponse.data;
@@ -117,7 +117,7 @@
           };
   
           const phResponse = await axios.post(
-            "http://143.47.190.25:1880/metingdata",
+            "https://nodeapi.hopto.org:1880/metingdata",
             payload
           );
   
@@ -138,7 +138,7 @@
           };
   
           const response = await axios.post(
-            "http://143.47.190.25:1880/metingdata",
+            "https://nodeapi.hopto.org:1880/metingdata",
             payload
           );
           console.log(this.selectedBuoy);
@@ -167,9 +167,8 @@
         };
   
         const response = await axios.post(
-          "http://143.47.190.25:1880/boei",
-          payload,
-          { timeout: 5000 }
+          "https://nodeapi.hopto.org:1880/boei",
+          payload
         );
   
         console.log("Mounted response:", response.data);
