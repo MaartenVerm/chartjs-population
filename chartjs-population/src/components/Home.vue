@@ -7,6 +7,7 @@
         <button @click="showAddBuoyPopup = true">Boei toevoegen</button>
         <button @click="$router.push('/Maintenance')">Onderhoud</button>
         <button @click="exportData">Export Data</button>
+        <button @click="$router.push('/testpage')">Testpagina</button>
       </nav>
     </header>
 
