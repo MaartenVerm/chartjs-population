@@ -1,20 +1,31 @@
 <template>
-    <GraphComponent title="Zuurstof Data" :dataPoints="dataPoints" />
-  </template>
-  
-  <script>
-  import GraphComponent from "../GraphComponent.vue";
-  
-  export default {
-    name: "ZuurstofGraph",
-    components: {
-      GraphComponent,
+  <div>
+    <h2>{{ title }}</h2>
+    <GraphComponent :title="title" :dataPoints="data" :labels="label"/>
+  </div>
+</template>
+
+<script>
+import GraphComponent from "../GraphComponent.vue";
+
+export default {
+  name: "ZuurstofGraph",
+  props: {
+    data: {
+      type: Array,
+      required: true,
     },
-    data() {
-      return {
-        dataPoints: [340, 345, 350, 355, 360], // Specifieke data voor deze grafiek
-      };
+    label: {
+      type: Array,
+      required: true,
     },
-  };
-  </script>
-  
+    title: {
+      type: String,
+      required: true,
+    },
+  },
+  components: {
+    GraphComponent,
+  },
+};
+</script>

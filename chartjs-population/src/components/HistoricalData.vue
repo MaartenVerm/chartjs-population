@@ -134,6 +134,75 @@ export default {
         this.graphData.PhGraph = [null]; // Zorg dat de grafiek een geldige waarde heeft
       }
     },
+    async fetchTemp() {
+      try {
+        const payload = {
+          type: "TEMPSELCT",
+          Datum: this.selectedPeriod,
+          Boei_ID: this.selectedBuoy,
+        };
+
+        const tempResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
+
+        if (tempResponse.data && Array.isArray(tempResponse.data)) {
+          this.graphData.TempGraph = tempResponse.data.map(entry => entry.TEMPERATUUR || null);
+        } else {
+          console.warn("Ongeldige of lege temperatuurdata ontvangen:", tempResponse.data);
+          this.graphData.TempGraph = [null]; // Zet een standaardwaarde om crashes te voorkomen
+        }
+
+      } catch (error) {
+        console.error("Error fetching temperatuur data:", error);
+        this.graphData.TempGraph = [null];
+      }
+    },
+
+    async fetchZuurstof() {
+      try {
+        const payload = {
+          type: "O2SELCT",
+          Datum: this.selectedPeriod,
+          Boei_ID: this.selectedBuoy,
+        };
+
+        const zuurstofResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
+
+        if (zuurstofResponse.data && Array.isArray(zuurstofResponse.data)) {
+          this.graphData.ZuurstofGraph = zuurstofResponse.data.map(entry => entry.ZUURSTOF || null);
+        } else {
+          console.warn("Ongeldige of lege zuurstofdata ontvangen:", zuurstofResponse.data);
+          this.graphData.ZuurstofGraph = [null];
+        }
+
+      } catch (error) {
+        console.error("Error fetching zuurstof data:", error);
+        this.graphData.ZuurstofGraph = [null];
+      }
+    },
+
+    async fetchTroebel() {
+      try {
+        const payload = {
+          type: "TRSELCT",
+          Datum: this.selectedPeriod,
+          Boei_ID: this.selectedBuoy,
+        };
+
+        const troebelResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
+
+        if (troebelResponse.data && Array.isArray(troebelResponse.data)) {
+          this.graphData.TroebelGraph = troebelResponse.data.map(entry => entry.TROEBELHEID || null);
+        } else {
+          console.warn("Ongeldige of lege troebelheiddata ontvangen:", troebelResponse.data);
+          this.graphData.TroebelGraph = [null];
+        }
+
+      } catch (error) {
+        console.error("Error fetching troebelheid data:", error);
+        this.graphData.TroebelGraph = [null];
+      }
+    },
+
     async fetchBuoyData() {
       console.log(this.selectedBuoy);
 
