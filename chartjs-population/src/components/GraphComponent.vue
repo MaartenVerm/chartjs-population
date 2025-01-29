@@ -54,30 +54,23 @@ export default {
     this.createChart(); // Maak de grafiek bij het laden
   },
   watch: {
-    dataPoints: {
-      handler(newData, oldData) {
-        if (JSON.stringify(newData) !== JSON.stringify(oldData)) {
-          console.log("Nieuwe data ontvangen:", newData);
-          if (this.chart) {
-            this.chart.data.datasets[0].data = newData.length ? newData : [0, 0, 0, 0, 0];
-            this.chart.update();
-          }
-        }
-      },
-      deep: true, // Zorg ervoor dat Vue diep vergelijkt
+  dataPoints: {
+    handler(newData, oldData) {
+      if (!this.chart) return;
+      if (!Array.isArray(newData) || newData.length === 0) {
+        console.warn("Geen geldige data ontvangen:", newData);
+        return;
+      }
+
+      if (JSON.stringify(newData) !== JSON.stringify(oldData)) {
+        console.log("Dataset gewijzigd, grafiek opnieuw opbouwen...");
+        this.destroyChart();
+        this.createChart();
+      }
     },
-    labels: {
-      handler(newLabels, oldLabels) {
-        if (JSON.stringify(newLabels) !== JSON.stringify(oldLabels)) {
-          if (this.chart) {
-            this.chart.data.labels = newLabels.length ? newLabels : ["Geen data"];
-            this.chart.update();
-          }
-        }
-      },
-      deep: true,
-    },
+    deep: true,
   },
+},
   methods: {
     createChart() {
       if (this.chart) {
