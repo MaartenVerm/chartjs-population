@@ -57,8 +57,8 @@ export default {
   dataPoints: {
     handler(newData, oldData) {
       if (!this.chart) return;
-      if (!Array.isArray(newData) || newData.length === 0) {
-        console.warn("Geen geldige data ontvangen:", newData);
+      if (!Array.isArray(newData) || newData.length === 0 || newData.every(value => value === null)) {
+        console.warn("Ongeldige of lege data ontvangen, update niet uitgevoerd:", newData);
         return;
       }
 
@@ -69,7 +69,7 @@ export default {
       }
     },
     deep: true,
-  },
+  }
 },
   methods: {
     createChart() {
