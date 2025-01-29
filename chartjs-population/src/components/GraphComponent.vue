@@ -80,6 +80,9 @@ export default {
   },
   methods: {
     createChart() {
+      if (this.chart) {
+        this.destroyChart(); // Voorkom dubbele instanties
+      }
       const ctx = this.$refs.chartCanvas.getContext("2d");
 
       this.chart = new Chart(ctx, {
