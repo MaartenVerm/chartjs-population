@@ -40,9 +40,10 @@ export default {
     dataPoints: {
       type: Array,
       required: true,
-    },labels: {
+    }, labels: {
       type: Array,
-      required: true,    },
+      required: true,
+    },
   },
   data() {
     return {
@@ -54,22 +55,28 @@ export default {
   },
   watch: {
     dataPoints: {
-      handler(newData) {
-        console.log("Nieuwe data ontvangen:", newData);
-        if (this.chart) {
-          // Update de grafiek met nieuwe data
-          this.chart.data.datasets[0].data = newData.length ? newData : [0, 0, 0, 0, 0];
-          this.chart.update();
+      handler(newData, oldData) {
+        if (JSON.stringify(newData) !== JSON.stringify(oldData)) {
+          console.log("Nieuwe data ontvangen:", newData);
+          if (this.chart) {
+            this.chart.data.datasets[0].data = newData.length ? newData : [0, 0, 0, 0, 0];
+            this.chart.update();
+          }
         }
-      }    },
-      labels: {
-      handler(newLabels) {
-        if (this.chart) {
-          this.chart.data.labels = newLabels.length ? newLabels : ["Geen data"];
-          this.chart.update();
+      },
+      deep: true, // Zorg ervoor dat Vue diep vergelijkt
+    },
+    labels: {
+      handler(newLabels, oldLabels) {
+        if (JSON.stringify(newLabels) !== JSON.stringify(oldLabels)) {
+          if (this.chart) {
+            this.chart.data.labels = newLabels.length ? newLabels : ["Geen data"];
+            this.chart.update();
+          }
         }
-      }
-  },
+      },
+      deep: true,
+    },
   },
   methods: {
     createChart() {
@@ -78,7 +85,7 @@ export default {
       this.chart = new Chart(ctx, {
         type: "line",
         data: {
-          labels: ["1u geleden", "45m", "30m", "15m", "Nu",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Labels voor de x-as
+          labels: ["1u geleden", "45m", "30m", "15m", "Nu", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Labels voor de x-as
           datasets: [
             {
               label: this.title,
