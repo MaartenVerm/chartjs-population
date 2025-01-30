@@ -17,8 +17,8 @@
         <!-- Boei Details -->
         <section v-if="selectedBuoyDetails" class="buoy-details">
             <h2>Boei Details</h2>
-            <p><strong>ID:</strong> {{ selectedBuoyDetails.id }}</p>
-            <p><strong>Naam:</strong> {{ selectedBuoyDetails.name }}</p>
+            <p><strong>ID:</strong> {{ selectedBuoyDetails.ID_NAME }}</p>
+            <p><strong>Naam:</strong> {{ selectedBuoyDetails.NAAM }}</p>
             <p><strong>Status:</strong> {{ selectedBuoyDetails.status }}</p>
         </section>
 
@@ -241,7 +241,7 @@ export default {
             if (!this.selectedBuoy) return;
             try {
                 const response = await axios.post("https://nodeapi.hopto.org:1880/boei", { type: "READONE", id: this.selectedBuoy });
-                this.selectedBuoyDetails = response.data || {};
+                this.selectedBuoyDetails = response.data;
             } catch (error) {
                 console.error("Error fetching buoy details:", error);
             }

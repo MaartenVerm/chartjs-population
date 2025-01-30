@@ -143,6 +143,7 @@ export default {
       this.newBuoy.name = "";
     },
 
+
     async exportData() {
       try {
         const payload = { type: "standaard" };
@@ -176,6 +177,33 @@ export default {
       }
     },
 
+    methods: {
+      async fetchCurrentData() {
+    try {
+        const payload = { type: "standaard" };
+        const response = await axios.post(
+            "https://nodeapi.hopto.org:1880/metingdata",
+            payload
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+            let latestData = response.data[response.data.length - 1]; // Pak de meest recente meting
+            this.currentData = {
+                pH: latestData.PH || 0,
+                TDS: latestData.EGV || 0,
+                zuurstof: latestData.O2 || 0,
+                troebelheid: latestData.TROEBEL || 0,
+                temperatuur: latestData.TEMP || 0
+            };
+        }
+
+        console.log("Huidige waarden bijgewerkt:", this.currentData);
+    } catch (error) {
+        console.error("Fout bij ophalen van actuele data:", error);
+    }
+}
+    },
+
     async fetchLastPosition() {
       try {
         const payload = { type: "GPSSELCT" };
@@ -203,6 +231,7 @@ export default {
   },
   async mounted() {
     await this.fetchLastPosition();
+    await this.fetchCurrentData(); // Zorgt ervoor dat data wordt opgehaald bij laden
   },
 };
 </script>
