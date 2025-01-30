@@ -10,6 +10,7 @@ export default {
   data() {
     return {
       map: null,
+      marker: null, // Marker wordt dynamisch geüpdatet
     };
   },
   mounted() {
@@ -24,7 +25,7 @@ export default {
   methods: {
     initializeMap() {
       this.map = L.map("map", {
-        center: [52.3702, 4.8952],
+        center: [52.3702, 4.8952], // Standaard coördinaten (Amsterdam)
         zoom: 13,
       });
 
@@ -32,7 +33,21 @@ export default {
         attribution: '&copy; OpenStreetMap contributors',
       }).addTo(this.map);
 
-      L.marker([52.3702, 4.8952]).addTo(this.map).bindPopup("Hier is Amsterdam!");
+      // Maak een lege marker die later wordt geüpdatet
+      this.marker = L.marker([52.3702, 4.8952])
+        .addTo(this.map)
+        .bindPopup("Geen locatie beschikbaar");
+    },
+    updateMarker(lat, lon) {
+      if (this.marker) {
+        this.marker
+          .setLatLng([lat, lon])
+          .setPopupContent(`Laatste locatie: ${lat}, ${lon}`)
+          .openPopup();
+        this.map.setView([lat, lon], 13); // Verplaats de kaart naar de nieuwe locatie
+      } else {
+        console.error("Marker niet geïnitialiseerd!");
+      }
     },
   },
 };

@@ -10,7 +10,8 @@
     <nav class="sensor-menu">
       <div class="dropdowns">
         <label for="period-select">Periode:</label>
-        <select id="period-select" v-model="selectedPeriod" @change="fetchTDS(); fetchPH();">
+        <select id="period-select" v-model="selectedPeriod"
+          @change="fetchTDS(); fetchPH(); fetchZuurstof(); fetchTroebel(); fetchTemp()"> 
           <option v-for="period in periods" :key="period.DATUM_TIJDT" :value="period.DATUM_TIJDT">
             {{ period.DATUM_TIJDT }}
           </option>
@@ -78,6 +79,18 @@ export default {
       sensorData: {}, // Placeholder voor API-sensorgegevens
     };
   },
+  computed: {
+    currentTitle() {
+      const titles = {
+        TDSGraph: "TDS Data",
+        PhGraph: "pH Data",
+        ZuurstofGraph: "Zuurstof Data",
+        TempGraph: "Temperatuur Data",
+        TroebelGraph: "Troebelheid Data",
+      };
+      return titles[this.currentGraph] || "Grafiek";
+    },
+  },
   methods: {
     async fetchTDS() {
       try {
@@ -134,29 +147,6 @@ export default {
         this.graphData.PhGraph = [null]; // Zorg dat de grafiek een geldige waarde heeft
       }
     },
-    async fetchTemp() {
-      try {
-        const payload = {
-          type: "TEMPSELCT",
-          Datum: this.selectedPeriod,
-          Boei_ID: this.selectedBuoy,
-        };
-
-        const tempResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
-
-        if (tempResponse.data && Array.isArray(tempResponse.data)) {
-          this.graphData.TempGraph = tempResponse.data.map(entry => entry.TEMPERATUUR || null);
-        } else {
-          console.warn("Ongeldige of lege temperatuurdata ontvangen:", tempResponse.data);
-          this.graphData.TempGraph = [null]; // Zet een standaardwaarde om crashes te voorkomen
-        }
-
-      } catch (error) {
-        console.error("Error fetching temperatuur data:", error);
-        this.graphData.TempGraph = [null];
-      }
-    },
-
     async fetchZuurstof() {
       try {
         const payload = {
@@ -165,13 +155,22 @@ export default {
           Boei_ID: this.selectedBuoy,
         };
 
-        const zuurstofResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
+        console.log("Zuurstof payload:", payload);
 
+        const zuurstofResponse = await axios.post(
+          "https://nodeapi.hopto.org:1880/metingdata",
+          payload
+        );
+
+        console.log("Zuurstof API response:", zuurstofResponse.data);
+
+        // Controleer of de API een array teruggeeft
         if (zuurstofResponse.data && Array.isArray(zuurstofResponse.data)) {
-          this.graphData.ZuurstofGraph = zuurstofResponse.data.map(entry => entry.ZUURSTOF || null);
+          // Map de data naar het juiste veld (bijvoorbeeld 'O2')
+          this.graphData.ZuurstofGraph = zuurstofResponse.data.map(entry => entry.O2 || null);
         } else {
-          console.warn("Ongeldige of lege zuurstofdata ontvangen:", zuurstofResponse.data);
-          this.graphData.ZuurstofGraph = [null];
+          console.warn("Ongeldige of lege zuurstof data ontvangen:", zuurstofResponse.data);
+          this.graphData.ZuurstofGraph = [null]; // Standaardwaarde bij fout
         }
 
       } catch (error) {
@@ -188,18 +187,54 @@ export default {
           Boei_ID: this.selectedBuoy,
         };
 
-        const troebelResponse = await axios.post("https://nodeapi.hopto.org:1880/metingdata", payload);
+        console.log("Troebelheid payload:", payload);
 
-        if (troebelResponse.data && Array.isArray(troebelResponse.data)) {
-          this.graphData.TroebelGraph = troebelResponse.data.map(entry => entry.TROEBELHEID || null);
+        const troebelheidResponse = await axios.post(
+          "https://nodeapi.hopto.org:1880/metingdata",
+          payload
+        );
+
+        console.log("Troebelheid API response:", troebelheidResponse.data);
+
+        // Controleer of de API een array teruggeeft
+        if (troebelheidResponse.data && Array.isArray(troebelheidResponse.data)) {
+          // Map de data naar het juiste veld (bijvoorbeeld 'tr')
+          this.graphData.TroebelGraph = troebelheidResponse.data.map(entry => entry.TROEBEL || null);
         } else {
-          console.warn("Ongeldige of lege troebelheiddata ontvangen:", troebelResponse.data);
-          this.graphData.TroebelGraph = [null];
+          console.warn("Ongeldige of lege troebelheid data ontvangen:", troebelheidResponse.data);
+          this.graphData.TroebelGraph = [null]; // Standaardwaarde bij fout
         }
 
       } catch (error) {
         console.error("Error fetching troebelheid data:", error);
         this.graphData.TroebelGraph = [null];
+      }
+    },
+
+    async fetchTemp() {
+      try {
+        const payload = {
+          type: "TEMPSELCT",
+          Datum: this.selectedPeriod,
+          Boei_ID: this.selectedBuoy,
+        };
+
+        const tempResponse = await axios.post(
+          "https://nodeapi.hopto.org:1880/metingdata",
+          payload
+        );
+
+        // Check of de response bestaat en een array is
+        if (tempResponse.data && Array.isArray(tempResponse.data)) {
+          this.graphData.TempGraph = tempResponse.data.map(entry => entry.TEMP || null);
+        } else {
+          console.warn("Ongeldige of lege temperatuur data ontvangen:", tempResponse.data);
+          this.graphData.TempGraph = [null]; // Zet een standaardwaarde om crashes te voorkomen
+        }
+
+      } catch (error) {
+        console.error("Error fetching pH data:", error);
+        this.graphData.TempGraph = [null]; // Zorg dat de grafiek een geldige waarde heeft
       }
     },
 

@@ -1,6 +1,8 @@
 <template>
     <div class="maintenance-container">
         <h1>Onderhoud</h1>
+        <button class="back-button" @click="goToHome">Terug naar Home</button>
+
 
         <!-- Dropdown voor boeien -->
         <div class="dropdowns">
@@ -60,27 +62,36 @@
             </form>
         </section>
 
-        <!-- SMS Waarschuwingen -->
+        <!-- SMS Waarschuwingen (IndexedDB) -->
         <section class="sms-notifications">
             <h2>SMS Waarschuwingen</h2>
-            <label for="sms-number">Telefoonnummer:</label>
-            <input id="sms-number" v-model="smsNumber" type="text" />
-            <label for="sms-warning">Waarschuwing:</label>
-            <input id="sms-warning" v-model="smsWarning" type="text" />
-            <button @click="addSmsNotification">Instellen</button>
+            <form @submit.prevent="addPhoneNumber">
+                <label for="sms-number">Telefoonnummer:</label>
+                <input id="sms-number" v-model="smsNumber" type="text" required />
+                <button type="submit">Opslaan</button>
+            </form>
+
+            <h3>Opgeslagen telefoonnummers</h3>
+            <ul>
+                <li v-for="(number, index) in phoneNumbers" :key="index">
+                    {{ number }}
+                    <button class="delete-btn" @click="deletePhoneNumber(index)">❌</button>
+                </li>
+            </ul>
         </section>
 
-        <!-- Waarschuwingen -->
+        <!-- Waarschuwingen Beheer (IndexedDB) -->
         <section class="warnings-section">
             <h2>Bestaande Waarschuwingen</h2>
             <ul>
-                <li v-for="warning in warnings" :key="warning.id">
-                    {{ warning.message }}
+                <li v-for="(warning, index) in warnings" :key="index">
+                    {{ warning }}
+                    <button class="delete-btn" @click="deleteWarning(index)">❌</button>
                 </li>
             </ul>
             <form @submit.prevent="addWarning">
                 <label for="new-warning">Nieuwe Waarschuwing:</label>
-                <input id="new-warning" v-model="newWarning" type="text" />
+                <input id="new-warning" v-model="newWarning" type="text" required />
                 <button type="submit">Toevoegen</button>
             </form>
         </section>
@@ -94,6 +105,7 @@ export default {
     name: "MaintenancePage",
     data() {
         return {
+            db: null, // IndexedDB referentie
             buoys: [], // Lijst van boeien
             selectedBuoy: null, // Geselecteerde boei
             selectedBuoyDetails: null, // Details van de boei
@@ -101,39 +113,41 @@ export default {
             selectedSensor: null, // Geselecteerde sensor
             newSensorName: "", // Naam voor nieuwe sensor
             smsNumber: "", // Telefoonnummer voor SMS
-            smsWarning: "", // Waarschuwingstekst
-            warnings: [], // Lijst van waarschuwingen
+            phoneNumbers: [], // Telefoonnummers in IndexedDB
+            warnings: [], // Lijst van waarschuwingen in IndexedDB
             newWarning: "", // Nieuwe waarschuwing
         };
     },
     methods: {
-        // Fetch all buoys
-        async fetchBuoys() {
-            try {
-                const payload = { type: "READ" }; // No additional parameters needed
-                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", payload);
-                this.buoys = response.data || [];
-                console.log("Buoys fetched:", this.buoys); // Debugging
-            } catch (error) {
-                console.error("Error fetching buoys:", error);
-            }
+        goToHome() {
+            this.$router.push("/");
         },
 
-        // Fetch details for a specific buoy
-        async fetchBuoyDetails() {
-            if (!this.selectedBuoy) return;
-            try {
-                const payload = { type: "READONE", id: this.selectedBuoy }; // Use 'id' as per API
-                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", payload);
-                console.log("Buoy Details Response:", response.data); // Debugging
-                this.selectedBuoyDetails = response.data || {};
-                await this.fetchSensorsByBuoy();
-            } catch (error) {
-                console.error("Error fetching buoy details:", error);
-            }
+        async openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("MaintenanceDB", 2); 
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains("phoneNumbers")) {
+                        db.createObjectStore("phoneNumbers", { autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains("warnings")) {
+                        db.createObjectStore("warnings", { autoIncrement: true });
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    reject(event.target.error);
+                };
+            });
         },
 
-        // Fetch sensors for the selected buoy
         async fetchSensorsByBuoy() {
             try {
                 const payload = { type: "READBOEI", boei_id: this.selectedBuoy };
@@ -141,89 +155,108 @@ export default {
                     "https://nodeapi.hopto.org:1880/sensorperboei",
                     payload
                 );
-                console.log("Sensors Response:", response.data); // Inspect the response
+                console.log("Sensors Response:", response.data);
                 this.selectedSensors = response.data || [];
             } catch (error) {
                 console.error("Error fetching sensors for buoy:", error);
             }
         },
+        //Telefoon nummer toevoegen aan indexedDB, dit omdat de telefoonnummers niet bestaan in de database
+        async addPhoneNumber() {
+            if (!this.smsNumber.trim()) return;
 
-        // Select a sensor
-        selectSensor(sensor) {
-            this.selectedSensor = { ...sensor };
-        },
+            const transaction = this.db.transaction(["phoneNumbers"], "readwrite");
+            const store = transaction.objectStore("phoneNumbers");
+            store.add(this.smsNumber);
 
-        // Update a sensor
-        async updateSensor() {
-            try {
-                const payload = {
-                    type: "UPDATE",
-                    serienummer: this.selectedSensor.sensor_serienummer, // Use 'serienummer' as per API
-                    tiepe: this.selectedSensor.tiepe, // Add 'tiepe' if available
-                    eenheid: this.selectedSensor.eenheid, // Add 'eenheid' if available
-                };
-                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
-                alert("Sensor bijgewerkt!");
-                await this.fetchSensorsByBuoy();
-            } catch (error) {
-                console.error("Error updating sensor:", error);
-            }
+            transaction.oncomplete = () => {
+                this.phoneNumbers.push(this.smsNumber);
+                this.smsNumber = "";
+            };
         },
-
-        // Delete a sensor
-        async deleteSensor() {
-            try {
-                const payload = {
-                    type: "DELETE",
-                    serienummer: this.selectedSensor.sensor_serienummer // Use 'serienummer' as per API
-                };
-                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
-                alert("Sensor verwijderd!");
-                this.selectedSensor = null;
-                await this.fetchSensorsByBuoy();
-            } catch (error) {
-                console.error("Error deleting sensor:", error);
-            }
-        },
-
-        // Add a new sensor
-        async addSensor() {
-            if (!this.newSensorName || !this.selectedBuoy) return;
-            try {
-                const payload = {
-                    type: "CREATE",
-                    serienummer: "NEW_SERIENUMMER", // Replace with actual serial number logic
-                    sensornaam: this.newSensorName,
-                    tiepe: "TYPE_HERE", // Replace with actual type
-                    eenheid: "UNIT_HERE", // Replace with actual unit
-                };
-                await axios.post("https://nodeapi.hopto.org:1880/sensor", payload);
-                alert("Nieuwe sensor toegevoegd!");
-                this.newSensorName = "";
-                await this.fetchSensorsByBuoy();
-            } catch (error) {
-                console.error("Error adding sensor:", error);
-            }
-        },
-
-        // Other methods (unchanged)
-        async addSmsNotification() {
-            alert(
-                `SMS-melding ingesteld voor nummer: ${this.smsNumber} met waarschuwing: ${this.smsWarning}`
-            );
-            this.smsNumber = "";
-            this.smsWarning = "";
-        },
+        //Waarschuwingen toevoegen aan indexedDB
         async addWarning() {
-            this.warnings.push({ id: Date.now(), message: this.newWarning });
-            this.newWarning = "";
+            if (!this.newWarning.trim()) return;
+
+            const transaction = this.db.transaction(["warnings"], "readwrite");
+            const store = transaction.objectStore("warnings");
+            store.add(this.newWarning);
+
+            transaction.oncomplete = () => {
+                this.warnings.push(this.newWarning);
+                this.newWarning = "";
+            };
+        },
+
+        async loadPhoneNumbers() {
+            const transaction = this.db.transaction(["phoneNumbers"], "readonly");
+            const store = transaction.objectStore("phoneNumbers");
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                this.phoneNumbers = request.result;
+            };
+        },
+
+        async loadWarnings() {
+            const transaction = this.db.transaction(["warnings"], "readonly");
+            const store = transaction.objectStore("warnings");
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                this.warnings = request.result;
+            };
+        },
+
+        async deletePhoneNumber(index) {
+            const transaction = this.db.transaction(["phoneNumbers"], "readwrite");
+            const store = transaction.objectStore("phoneNumbers");
+            store.delete(index + 1);
+
+            transaction.oncomplete = () => {
+                this.phoneNumbers.splice(index, 1);
+            };
+        },
+
+        async deleteWarning(index) {
+            const transaction = this.db.transaction(["warnings"], "readwrite");
+            const store = transaction.objectStore("warnings");
+            store.delete(index + 1);
+
+            transaction.oncomplete = () => {
+                this.warnings.splice(index, 1);
+            };
+        },
+
+        async fetchBuoys() {
+            try {
+                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", { type: "READ" });
+                this.buoys = response.data || [];
+            } catch (error) {
+                console.error("Error fetching buoys:", error);
+            }
+        },
+
+        async fetchBuoyDetails() {
+            if (!this.selectedBuoy) return;
+            try {
+                const response = await axios.post("https://nodeapi.hopto.org:1880/boei", { type: "READONE", id: this.selectedBuoy });
+                this.selectedBuoyDetails = response.data || {};
+            } catch (error) {
+                console.error("Error fetching buoy details:", error);
+            }
         },
     },
     async mounted() {
+        await this.openDatabase();
+        await this.loadPhoneNumbers();
+        await this.loadWarnings();
         await this.fetchBuoys();
     },
 };
 </script>
+
+
 
 <style>
 .maintenance-container {
@@ -247,4 +280,5 @@ export default {
 .sensor-section {
     margin-top: 20px;
 }
+
 </style>

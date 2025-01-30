@@ -13,7 +13,7 @@
     <main>
       <!-- Kaart -->
       <section class="map-section">
-        <MapComponent />
+        <MapComponent ref="mapComponent" />
       </section>
 
       <!-- Huidige waarden -->
@@ -98,7 +98,7 @@ export default {
         troebelheid: [12, 14, 15, 16, 14],
         temperatuur: [19.0, 19.5, 20.0, 20.5, 21.0],
       },
-      showAddBuoyPopup: false, // Controleer of het popupvenster zichtbaar is
+      showAddBuoyPopup: false,
       newBuoy: {
         id: "",
         name: "",
@@ -125,13 +125,9 @@ export default {
         );
 
         if (response.data.success) {
-          // Log de succesvolle toevoeging in de console
           console.log(`Boei met ID: ${this.newBuoy.id} en naam: ${this.newBuoy.name} succesvol toegevoegd.`);
-
-          // Toon een melding aan de gebruiker
           alert(`Boei met ID: ${this.newBuoy.id} en naam: ${this.newBuoy.name} is succesvol toegevoegd!`);
-
-          this.closePopup(); // Sluit het popupvenster
+          this.closePopup();
         } else {
           alert("Er is een fout opgetreden bij het toevoegen van de boei.");
         }
@@ -149,9 +145,7 @@ export default {
 
     async exportData() {
       try {
-        const payload = {
-          type: "standaard",
-        };
+        const payload = { type: "standaard" };
 
         const response = await axios.post(
           "https://nodeapi.hopto.org:1880/metingdata",
@@ -182,30 +176,42 @@ export default {
       }
     },
 
-    async mounted() {
+    async fetchLastPosition() {
       try {
-        const payload = {
-          type: "standaard",
-        };
-
+        const payload = { type: "GPSSELCT" };
         const response = await axios.post(
-          "http://143.47.190.25:1880/metingdata",
+          "https://nodeapi.hopto.org:1880/metingdata",
           payload
         );
 
-        if (response.data) {
-          this.currentData = response.data.currentValues || this.currentData;
-          this.sensorData = response.data.sensorData || this.sensorData;
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const lastPosition = response.data[response.data.length - 1];
+          console.log("Laatste positie ontvangen:", lastPosition);
+
+          if (lastPosition.GPS_La && lastPosition.GPS_Lo) {
+            this.$refs.mapComponent.updateMarker(lastPosition.GPS_La, lastPosition.GPS_Lo);
+          } else {
+            console.warn("Ongeldige GPS-gegevens ontvangen:", lastPosition);
+          }
+        } else {
+          console.warn("Geen GPS-data ontvangen:", response.data);
         }
       } catch (error) {
-        console.error("Error fetching data with POST:", error);
+        console.error("Fout bij ophalen van GPS-data:", error);
       }
     },
+  },
+  async mounted() {
+    await this.fetchLastPosition();
   },
 };
 </script>
 
 <style>
+.map-section {
+  margin-bottom: 20px;
+}
+
 .popup {
   position: fixed;
   top: 0;
@@ -228,10 +234,6 @@ export default {
   max-width: 100%;
 }
 
-.popup-content h2 {
-  margin-top: 0;
-}
-
 .popup-content label {
   display: block;
   margin: 10px 0 5px;
@@ -243,27 +245,5 @@ export default {
   margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.popup-actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-.popup-actions button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.popup-actions button:first-child {
-  background-color: #007bff;
-  color: white;
-}
-
-.popup-actions button:last-child {
-  background-color: #dc3545;
-  color: white;
 }
 </style>
